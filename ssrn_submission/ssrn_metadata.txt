@@ -1,0 +1,63 @@
+SSRN SUBMISSION METADATA
+========================
+Copy each field below into the corresponding box on the SSRN
+"Submit a Paper" form.
+
+TITLE
+-----
+Mean Reversion in Fixed Income ETF Premiums and Discounts: Evidence,
+Regimes, and an Implementable Strategy
+
+AUTHORS
+-------
+Raj [Last Name]
+
+AFFILIATION
+-----------
+MS Quantitative Finance Candidate, Fox School of Business, Temple University
+
+CONTACT EMAIL
+-------------
+010204raj@gmail.com
+
+ABSTRACT (149 words)
+--------------------
+Prices of bond exchange-traded funds often drift from the value of the
+bonds they hold. Whether these gaps close quickly matters to investors
+trading at ETF prices and to arbitrageurs who close them. We study five
+large fixed income ETFs (HYG, LQD, JNK, TLT, AGG) with daily data from
+June 2021 to June 2026, net asset values simulated by a calibrated
+mean-reverting process. We flag days when the premium or discount is
+unusually wide relative to its trailing quarter and track the next twenty
+days. We identify 160 dislocations at the two-standard-deviation
+threshold. The typical gap normalizes within nine trading days, and 57
+percent close fully within ten. A rule that buys discounts and sells
+premiums earns roughly zero after costs (Sharpe 0.01, 51 percent hit
+rate), as the placebo design predicts. The framework is a ready template
+for testing whether live ETF price gaps offer profitable mean reversion.
+
+JEL CLASSIFICATIONS
+-------------------
+G12, G14, G23
+
+KEYWORDS (6 max, comma separated)
+---------------------------------
+ETF arbitrage, NAV premium/discount, mean reversion, fixed income ETFs,
+authorized participant mechanism, market microstructure
+
+SUGGESTED PAPER SERIES / SUBJECT AREAS
+--------------------------------------
+Financial Economics > Asset Pricing & Valuation
+Financial Economics > Market Microstructure
+
+PAPER TYPE
+----------
+Working Paper
+
+VISIBILITY
+----------
+Public
+
+SUPPLEMENTARY MATERIALS (optional)
+----------------------------------
+Code and data pipeline: https://github.com/rxj0102/etf-nav-arbitrage-study

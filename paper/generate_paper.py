@@ -47,7 +47,8 @@ logger = config.get_logger(__name__)
 
 PAPER_TITLE = ("Mean Reversion in Fixed Income ETF Premiums and Discounts: "
                "Evidence, Regimes, and an Implementable Strategy")
-AUTHOR_PLACEHOLDER = "[Author Name] — [Affiliation] — [email@institution.edu]"
+AUTHOR_PLACEHOLDER = ("Raj [Last Name] — MS Quantitative Finance Candidate, "
+                      "Fox School of Business, Temple University")
 
 PAGE_WIDTH, PAGE_HEIGHT = letter
 MARGIN = 1.0 * inch
@@ -154,9 +155,9 @@ def title_page(styles: dict) -> list:
         Spacer(1, 0.5 * inch),
         *abstract.build(styles),
         Paragraph(
-            "<i>Keywords:</i> exchange-traded funds, net asset value, "
-            "arbitrage, mean reversion, fixed income, market "
-            "microstructure. <i>JEL:</i> G12, G14, G23.",
+            "<i>Keywords:</i> ETF arbitrage, NAV premium/discount, mean "
+            "reversion, fixed income ETFs, authorized participant "
+            "mechanism. <i>JEL classifications:</i> G12, G14, G23.",
             styles["abstract"]),
         PageBreak(),
     ]
