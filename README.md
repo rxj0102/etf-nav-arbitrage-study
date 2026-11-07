@@ -27,7 +27,7 @@ largest magnitudes, during high-volatility and wide-credit-spread regimes.
 
 ## Corrections and caveats
 
-- **Sizing look-ahead removed.** Position sizes were normalised by the full-sample mean of inverse volatility; they now use an expanding mean, so a size on day t depends only on data up to t. Backtest numbers in `outputs/` and the paper predate this change and should be regenerated.
+- **Sizing look-ahead removed.** Position sizes were normalised by the full-sample mean of inverse volatility; they now use an expanding mean, so a size on day t depends only on data up to t. Outputs, processed data and `ssrn_submission/paper_final.pdf` were regenerated on 2026-11-07 after this change (live prices, simulated NAV, synthetic OAS because no FRED key was set); the costed strategy now earns about zero on the simulated NAV, as expected when NAV is a mean-reverting simulation.
 - **Sortino ratio** now uses the standard downside deviation, `sqrt(mean(min(r, 0)^2))`, instead of the standard deviation of negative returns only.
 - **Execution timing.** A decision at close t uses the same-day close and NAV and is filled at that same close, then earns the t+1 return. This is optimistic for a premium signal; a one-day delay is a more conservative assumption.
 - **NAV is simulated** (see above), so results illustrate the pipeline, not market inefficiency.
