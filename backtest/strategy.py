@@ -99,7 +99,9 @@ def generate_positions(sub: pd.DataFrame) -> tuple[pd.Series, list[dict]]:
 
     vol = sub["ret_1d"].rolling(config.VOL_WINDOW).std()
     inv_vol = 1.0 / vol.replace(0, np.nan)
-    size = (inv_vol / inv_vol.mean()).clip(upper=config.MAX_POSITION_MULTIPLE)
+    # Expanding mean (not full-sample) so sizing uses only past information.
+    norm = inv_vol.expanding(min_periods=config.VOL_WINDOW).mean()
+    size = (inv_vol / norm).clip(upper=config.MAX_POSITION_MULTIPLE)
     size = size.fillna(0.0).to_numpy()
 
     positions = np.zeros(len(sub))
@@ -217,8 +219,8 @@ def compute_metrics(returns: pd.Series, trades: pd.DataFrame | None,
     ann_vol = returns.std() * np.sqrt(tdpy)
     sharpe = ann_return / ann_vol if ann_vol > 0 else float("nan")
 
-    downside = returns[returns < 0]
-    downside_vol = downside.std() * np.sqrt(tdpy) if len(downside) else float("nan")
+    # Standard downside deviation (target 0): sqrt(mean(min(r, 0)^2)) over all days.
+    downside_vol = float(np.sqrt((np.minimum(returns, 0.0) ** 2).mean()) * np.sqrt(tdpy)) if n else float("nan")
     sortino = ann_return / downside_vol if downside_vol and downside_vol > 0 else float("nan")
 
     equity = (1 + returns).cumprod()
