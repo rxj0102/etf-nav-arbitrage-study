@@ -1,5 +1,7 @@
 # ETF NAV Arbitrage Study
 
+[![CI](https://github.com/rxj0102/etf-nav-arbitrage-study/actions/workflows/ci.yml/badge.svg)](https://github.com/rxj0102/etf-nav-arbitrage-study/actions/workflows/ci.yml)
+
 A complete, reproducible research pipeline studying **mean reversion in the
 premium/discount of fixed income ETFs** (HYG, LQD, JNK, TLT, AGG). The project
 fetches five years of daily data, normalizes each fund's premium to NAV as a
