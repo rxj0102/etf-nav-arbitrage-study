@@ -75,3 +75,11 @@ def test_trade_log_uses_fill_closes():
     _, t2 = strategy.generate_positions(panel, exec_lag=2)
     assert len(t1) == len(t2) > 0
     assert not np.allclose([t["gross_return_pct"] for t in t1], [t["gross_return_pct"] for t in t2])
+
+
+def test_trade_pnl_uses_adjusted_close_when_present():
+    panel = _panel()
+    panel["adj_close"] = panel["close"] * np.linspace(1.0, 1.05, len(panel))
+    _, t_adj = strategy.generate_positions(panel)
+    _, t_raw = strategy.generate_positions(panel.drop(columns="adj_close"))
+    assert not np.allclose([t["gross_return_pct"] for t in t_adj], [t["gross_return_pct"] for t in t_raw])

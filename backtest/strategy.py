@@ -96,7 +96,9 @@ def generate_positions(
     """
     sub = sub.reset_index(drop=True)
     z = sub["zscore"].to_numpy()
-    close = sub["close"].to_numpy()
+    # Trade P&L on the dividend-adjusted close when available, so it agrees
+    # with the daily ret_1d series.
+    close = (sub["adj_close"] if "adj_close" in sub.columns else sub["close"]).to_numpy()
     dates = sub["date"]
 
     vol = sub["ret_1d"].rolling(config.VOL_WINDOW).std()
