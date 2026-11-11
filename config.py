@@ -120,6 +120,7 @@ MAX_HOLDING_DAYS = 20       # time stop
 VOL_WINDOW = 21             # rolling window for inverse-vol sizing
 MAX_POSITION_MULTIPLE = 2.0  # cap relative to average position size
 TRANSACTION_COST_BPS = 5.0  # one-way cost per trade, basis points
+EXEC_LAG = 2                # days from the signal close to the first return earned (2 = fill at next close)
 TRAIN_YEARS = 3             # walk-forward: first 3 years train, last 2 test
 TRADING_DAYS_PER_YEAR = 252
 
