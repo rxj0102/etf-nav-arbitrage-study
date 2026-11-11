@@ -75,7 +75,9 @@ def load_spreads() -> pd.DataFrame:
     return pd.read_csv(path, parse_dates=["date"])
 
 
-def generate_positions(sub: pd.DataFrame) -> tuple[pd.Series, list[dict]]:
+def generate_positions(
+    sub: pd.DataFrame, exec_lag: int = 1
+) -> tuple[pd.Series, list[dict]]:
     """Generate daily positions and the trade log for one ETF.
 
     Implements the entry/exit state machine: enter at +/-`ENTRY_ZSCORE`,
@@ -122,7 +124,10 @@ def generate_positions(sub: pd.DataFrame) -> tuple[pd.Series, list[dict]]:
             held = i - entry_i
             crossed_zero = (state == 1 and z[i] >= 0) or (state == -1 and z[i] <= 0)
             if crossed_zero or held >= config.MAX_HOLDING_DAYS:
-                gross_ret = state * (close[i] / close[entry_i] - 1.0)
+                k = exec_lag - 1  # decision at close t, fill at close t + k
+                fill_in = min(entry_i + k, len(close) - 1)
+                fill_out = min(i + k, len(close) - 1)
+                gross_ret = state * (close[fill_out] / close[fill_in] - 1.0)
                 cost = 2 * config.TRANSACTION_COST_BPS / 1e4 * entry_size
                 trades.append({
                     "ticker": sub["ticker"].iloc[0],
@@ -143,13 +148,17 @@ def generate_positions(sub: pd.DataFrame) -> tuple[pd.Series, list[dict]]:
     return pd.Series(positions, index=sub.index), trades
 
 
-def backtest_portfolio(panel: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame]:
+def backtest_portfolio(
+    panel: pd.DataFrame, exec_lag: int = config.EXEC_LAG
+) -> tuple[pd.DataFrame, pd.DataFrame]:
     """Run the backtest across all ETFs and assemble portfolio returns.
 
-    Positions decided at the close of day *t* earn day *t+1*'s return
-    (one-day implementation lag, no look-ahead).  Transaction costs of
-    ``TRANSACTION_COST_BPS`` are charged on each day's absolute change in
-    position (turnover).
+    The z-score uses the day *t* close and NAV, so the earliest realistic
+    fill is the close of *t+1*. A position decided at the close of *t* first
+    earns the return of day *t + exec_lag* (default 2). ``exec_lag=1``
+    assumes a fill at the very close that produced the signal, the original
+    and optimistic convention. Transaction costs of ``TRANSACTION_COST_BPS``
+    are charged on each day's absolute change in the held position.
 
     Args:
         panel: Long-format spread panel.
@@ -166,12 +175,13 @@ def backtest_portfolio(panel: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame]
 
     for ticker, sub in panel.groupby("ticker"):
         sub = sub.sort_values("date").reset_index(drop=True)
-        positions, trades = generate_positions(sub)
+        positions, trades = generate_positions(sub, exec_lag=exec_lag)
         all_trades.extend(trades)
 
         ret = sub["ret_1d"].fillna(0.0)
-        lagged = positions.shift(1).fillna(0.0)
-        turnover = positions.diff().abs().fillna(0.0)
+        lagged = positions.shift(exec_lag).fillna(0.0)
+        # Cost is charged when the held position changes (at the fill).
+        turnover = lagged.diff().abs().fillna(lagged.abs())
         cost = turnover * config.TRANSACTION_COST_BPS / 1e4
         strat = lagged * ret - cost
 
@@ -422,6 +432,18 @@ def main() -> pd.DataFrame:
         logger.info("[%s] strategy: ann ret %.2f%%, Sharpe %.2f, maxDD %.2f%%",
                     row["window"], row["ann_return_pct"], row["sharpe"],
                     row["max_drawdown_pct"])
+
+    # Execution-lag sensitivity: same rules, fill at the signal close (1)
+    # versus the next close (2, the default).
+    rows = []
+    for lag in (1, 2):
+        r_lag, t_lag = backtest_portfolio(panel, exec_lag=lag)
+        m = build_metric_table(r_lag, t_lag)
+        rows.append(m[m["label"] == "strategy"].assign(exec_lag=lag))
+    lag_table = pd.concat(rows, ignore_index=True)
+    lag_path = config.DATA_PROCESSED_DIR / "exec_lag_comparison.csv"
+    lag_table.to_csv(lag_path, index=False)
+    logger.info("Saved execution-lag comparison %s", lag_path)
 
     plot_cumulative(returns)
     plot_drawdown(returns)
