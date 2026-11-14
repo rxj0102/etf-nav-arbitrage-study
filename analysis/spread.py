@@ -140,7 +140,7 @@ def build_spread_panel() -> pd.DataFrame:
     """Assemble the long-format spread panel for all ETFs.
 
     Returns:
-        DataFrame with columns ``date, ticker, close, nav, premium_pct,
+        DataFrame with columns ``date, ticker, close, adj_close, nav, premium_pct,
         zscore, ret_1d, flag_1.5, flag_2.0, flag_2.5, stress_episode``.
     """
     frames = []
@@ -148,15 +148,19 @@ def build_spread_panel() -> pd.DataFrame:
         prices = load_raw_prices(ticker)
         premium = compute_premium_discount(prices)
         zscore = rolling_zscore(premium)
+        # Returns use the dividend-adjusted close (bond ETFs pay monthly);
+        # the premium stays on Close, the same price basis as NAV.
+        adj = prices["Adj Close"] if "Adj Close" in prices.columns else prices["Close"]
         part = pd.DataFrame(
             {
                 "date": prices.index,
                 "ticker": ticker,
                 "close": prices["Close"].to_numpy(),
+                "adj_close": adj.to_numpy(),
                 "nav": prices["NAV"].to_numpy(),
                 "premium_pct": premium.to_numpy(),
                 "zscore": zscore.to_numpy(),
-                "ret_1d": prices["Close"].pct_change().to_numpy(),
+                "ret_1d": adj.pct_change().to_numpy(),
             }
         )
         for threshold in config.DISLOCATION_THRESHOLDS:

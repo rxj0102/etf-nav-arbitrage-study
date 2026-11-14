@@ -169,7 +169,8 @@ def fetch_etf_prices(ticker: str, start: datetime, end: datetime) -> pd.DataFram
         )
         if frame is None or frame.empty:
             raise RuntimeError(f"yfinance returned no rows for {ticker}")
-        frame = frame[["Open", "High", "Low", "Close", "Volume"]].copy()
+        cols = ["Open", "High", "Low", "Close", "Adj Close", "Volume"]
+        frame = frame[[c for c in cols if c in frame.columns]].copy()
         # Yahoo can return a NaN close for the current, incomplete session.
         frame = frame.dropna(subset=["Close"])
         frame.index = pd.to_datetime(frame.index).tz_localize(None)
