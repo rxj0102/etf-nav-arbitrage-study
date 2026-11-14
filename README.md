@@ -17,10 +17,10 @@ Fixed income ETF prices deviate from NAV because the underlying bonds trade
 over-the-counter with stale marks while the ETF trades continuously. When the
 premium/discount becomes abnormally stretched (|z-score| > 2 relative to its
 own 63-day history), authorized participant arbitrage pulls it back, so
-dislocations **mean-revert predictably within days** — fastest, but with the
+dislocations **mean-revert predictably within days** - fastest, but with the
 largest magnitudes, during high-volatility and wide-credit-spread regimes.
 
-> **Important — simulated NAV.** Official end-of-day NAVs are not available
+> **Important - simulated NAV.** Official end-of-day NAVs are not available
 > through free APIs, so NAV is *simulated* as the ETF close adjusted by a
 > seeded mean-reverting AR(1) premium process (φ = 0.85, σ = 0.003; see
 > `data/fetch.py`). All results therefore demonstrate the methodology and
@@ -31,7 +31,9 @@ largest magnitudes, during high-volatility and wide-credit-spread regimes.
 
 - **Sizing look-ahead removed.** Position sizes were normalised by the full-sample mean of inverse volatility; they now use an expanding mean, so a size on day t depends only on data up to t. Outputs, processed data and `ssrn_submission/paper_final.pdf` were regenerated on 2026-11-07 after this change (live prices, simulated NAV, synthetic OAS because no FRED key was set); the costed strategy now earns about zero on the simulated NAV, as expected when NAV is a mean-reverting simulation.
 - **Sortino ratio** now uses the standard downside deviation, `sqrt(mean(min(r, 0)^2))`, instead of the standard deviation of negative returns only.
-- **Execution timing.** A decision at close t uses the same-day close and NAV and is filled at that same close, then earns the t+1 return. This is optimistic for a premium signal; a one-day delay is a more conservative assumption.
+- **Execution timing fixed.** A decision at close t used the same-day close and NAV and was filled at that same close. `EXEC_LAG` in `config.py` now defaults to 2: the fill is the close of t+1 and the first return earned is t+2, as the paper already described. `data/processed/exec_lag_comparison.csv` reports both. On the simulated NAV the full-sample Sharpe is -0.10 at lag 1 and -0.06 at lag 2, so the timing change does not move the placebo result.
+- **Total returns.** Returns used the unadjusted close and left out bond ETF distributions. They now use the dividend-adjusted close; the premium/discount stays on the unadjusted close to match NAV.
+- Outputs, processed data, `ssrn_submission/paper_final.pdf` and the SSRN abstract were regenerated on 2026-11-11 after these two changes (live prices, simulated NAV, synthetic OAS because no FRED key was set).
 - **NAV is simulated** (see above), so results illustrate the pipeline, not market inefficiency.
 
 ## Architecture
@@ -87,7 +89,7 @@ cp .env.example .env
 ```
 
 Without a `FRED_API_KEY` the OAS series are simulated (logged loudly); without
-network access, prices are simulated too — the full pipeline always runs.
+network access, prices are simulated too - the full pipeline always runs.
 
 ## How to run (exact order)
 
@@ -116,7 +118,7 @@ validation (a placebo on price returns, by construction):
 - Dislocation z-scores revert to zero with a median time of a few trading
   days; the large majority of 2σ events fully revert within 10 days.
 - Forward *price* returns after events are statistically indistinguishable
-  from zero — exactly what the simulated-NAV placebo predicts; with a real
+  from zero - exactly what the simulated-NAV placebo predicts; with a real
   NAV feed, genuine dislocation premia would surface in the same tables.
 
 ![Premium/discount time series](outputs/figures/premium_discount_timeseries.png)
@@ -171,6 +173,36 @@ If email fails, Slack is still attempted (and vice versa).
 }
 ```
 
+## Reproducibility
+
+### Data availability
+
+All inputs come from free, public sources. No paid data or API keys are required unless noted.
+
+- Yahoo Finance via the yfinance package (free, no key)
+- FRED, Federal Reserve Bank of St. Louis (free)
+- Files shipped in the `data/` folder of this repository
+
+### Computational requirements
+
+- Python 3.12.3. Every dependency version is pinned in `uv.lock`.
+- Checked on Linux x86_64 with 2 CPU cores and 8 GB RAM. No GPU is needed.
+
+```bash
+pip install uv     # once
+uv sync            # installs the exact pinned environment
+uv run pytest -q   # runs the test suite
+```
+
+### Runtime
+
+The test suite (3 tests) finishes in about 16 seconds on the machine above, including any data downloads it triggers.
+
+### Citation
+
+Citation metadata is in `CITATION.cff`. GitHub turns it into a Cite this repository button on the repo page.
+
+
 ## License
 
-MIT — see [LICENSE](LICENSE). Nothing in this repository is investment advice.
+MIT - see [LICENSE](LICENSE). Nothing in this repository is investment advice.
